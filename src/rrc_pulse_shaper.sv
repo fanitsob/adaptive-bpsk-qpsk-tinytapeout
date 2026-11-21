@@ -77,16 +77,15 @@ module rrc_pulse_shaper (
 
         for (integer k = 0; k < 7; k = k + 1) begin
 
-            if ((4*k + int'(phase)) < 25) begin
-
+if ((4*k + phase) < 25) begin
                 case (history[k])
                     2'sd1:
                         accumulator = accumulator
-                                    + coefficient(4*k + int'(phase));
+                                   + coefficient(4*k + phase); 
 
                     -2'sd1:
                         accumulator = accumulator
-                                    - coefficient(4*k + int'(phase));
+                                    - coefficient(4*k + phase);
 
                     default: begin
                         // Zero symbol contributes nothing.
