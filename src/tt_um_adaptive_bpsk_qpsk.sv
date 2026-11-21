@@ -122,7 +122,7 @@ module tt_um_adaptive_bpsk_qpsk (
         rrc_enable ? rrc_sample_valid   : 1'b0,
         rrc_enable ? buffer_overflow    : window_done,
         rrc_enable ? buffer_ready       : error_detected,
-        mode,
+        (valid_out ? mapper_mode : mode),
         valid_out,
         q_sign,
         i_sign
