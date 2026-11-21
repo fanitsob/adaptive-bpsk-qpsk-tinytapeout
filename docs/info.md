@@ -7,18 +7,21 @@ You can also include images in this folder and reference them in the markdown. E
 512 kb in size, and the combined size of all images must be less than 1 MB.
 -->
 
-# Adaptive BPSK/QPSK Symbol Mapper with Error Monitoring
+# Adaptive BPSK/QPSK Modulator with RRC Pulse Shaping
 
 ## How it works
 
 This project implements a digital adaptive BPSK/QPSK symbol mapper
 with an integrated error monitor and modulation controller.
 
-The design consists of three main functional blocks:
+The design consists of six main functional blocks:
 
 1. BPSK/QPSK Symbol Mapper
 2. Error Monitor
 3. Adaptive Modulation Controller
+4. Symbol Buffer
+5. RRC Stream Scheduler
+6. Dual-Channel RRC Pulse Shaping
 
 ### BPSK/QPSK Symbol Mapper
 
@@ -72,6 +75,78 @@ The error monitor requires externally supplied, aligned
 reference and received bitstreams. It does not contain
 an RF receiver or an analog channel estimator.
 
+### Root-Raised-Cosine Pulse Shaping
+
+The design includes two digital Root-Raised-Cosine (RRC)
+pulse-shaping filters, one for the in-phase (I) component
+and one for the quadrature (Q) component.
+
+Each filter uses:
+
+- 25 fixed-point coefficients
+- Roll-off factor: approximately 0.35
+- Filter span: 6 symbols
+- Oversampling factor: 4 samples per symbol
+- Signed 8-bit output samples
+
+The filters use a polyphase architecture with seven
+symbol-history positions.
+
+Input symbols have values of -1, 0, or +1.
+Coefficient multiplication is therefore implemented
+using addition, subtraction, or bypass operations.
+
+This avoids general-purpose multipliers.
+
+### Symbol Buffer and RRC Scheduler
+
+A one-symbol buffer connects the registered BPSK/QPSK
+mapper to the RRC stream scheduler.
+
+The scheduler accepts a new symbol every eight
+clock cycles during continuous operation.
+
+It generates four RRC sample pairs per symbol.
+Each pair consists of one I sample and one Q sample.
+
+The samples are serialized onto a shared 8-bit
+output bus.
+
+At the configured 50 MHz clock, the nominal maximum
+input rate is 6.25 million symbols per second,
+provided that the source follows the required
+symbol timing.
+
+The buffer detects input overflow if symbols arrive
+faster than they can be accepted.
+
+### Legacy and RRC Operating Modes
+
+The ui_in[7] input selects the output interface:
+
+- ui_in[7] = 0: Legacy adaptive BPSK/QPSK operation.
+- ui_in[7] = 1: RRC sample output operation.
+
+In legacy mode, uio_out contains the 8-bit error count.
+
+In RRC mode, uio_out contains signed 8-bit RRC samples.
+
+The RRC status outputs are:
+
+- uo_out[4]: Symbol buffer input-ready indication
+- uo_out[5]: Sticky buffer overflow flag
+- uo_out[6]: RRC sample valid
+- uo_out[7]: RRC sample channel (0=I, 1=Q)
+
+The input source must respect the symbol processing
+rate to avoid overflow. The input-ready indication
+describes the internal buffer; external input timing
+must also account for the registered symbol mapper.
+
+The RRC filters are digital baseband pulse shapers.
+The chip does not contain an RF carrier generator,
+digital-to-analog converter, or analog transmitter.
+
 ## How to test
 
 Apply a clock to the clk input and reset the circuit
@@ -110,7 +185,34 @@ To test adaptive switching:
 5. Supply an intermediate-error window between two
    low-error windows to verify that the pending
    confirmation is cancelled.
+### Testing RRC Pulse Shaping
 
+To test RRC operation:
+
+1. Assert rst_n low to reset the design.
+2. Release reset and set ui_in[7] = 1.
+3. Supply a valid BPSK or QPSK symbol using ui_in[4].
+4. Observe uo_out[6] to identify valid output samples.
+5. Read the signed 8-bit sample from uio_out[7:0].
+6. Use uo_out[7] to distinguish I and Q samples.
+
+The RRC scheduler generates four I/Q sample pairs
+per accepted symbol.
+
+Successive symbols must respect the processing interval
+of eight clock cycles.
+
+The following SystemVerilog testbenches verify the
+RRC implementation:
+
+- tb_rrc_pulse_shaper.sv: Impulse response and convolution
+- tb_rrc_iq_pair.sv: BPSK/QPSK I/Q filtering
+- tb_rrc_stream_scheduler.sv: Sample timing and serialization
+- tb_rrc_continuous.sv: Consecutive-symbol convolution
+- tb_rrc_symbol_buffer.sv: Buffering and overflow detection
+- tb_rrc_top.sv: Top-level BPSK RRC operation
+- tb_rrc_qpsk_top.sv: Adaptive QPSK RRC operation
+- tb_rrc_overflow_top.sv: Top-level overflow detection
 The design includes SystemVerilog and Cocotb testbenches
 for functional verification.
 
