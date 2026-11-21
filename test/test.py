@@ -1,40 +1,90 @@
-# SPDX-FileCopyrightText: © 2024 Tiny Tapeout
-# SPDX-License-Identifier: Apache-2.0
-
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles
+from cocotb.triggers import ClockCycles, FallingEdge, RisingEdge, Timer
 
 
 @cocotb.test()
-async def test_project(dut):
-    dut._log.info("Start")
+async def test_adaptive_modem(dut):
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, units="us")
-    cocotb.start_soon(clock.start())
-
-    # Reset
-    dut._log.info("Reset")
     dut.ena.value = 1
     dut.ui_in.value = 0
     dut.uio_in.value = 0
     dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
+
+    cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())
+
+    await ClockCycles(dut.clk, 3)
     dut.rst_n.value = 1
 
-    dut._log.info("Test project behavior")
+    await ClockCycles(dut.clk, 2)
 
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
+    assert (int(dut.uo_out.value) >> 3) & 1 == 0
+    assert int(dut.uio_oe.value) == 255
 
-    # Wait for one clock cycle to see the output values
-    await ClockCycles(dut.clk, 1)
+    async def send_window(errors, expected_mode):
 
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
+        for i in range(128):
+            await FallingEdge(dut.clk)
 
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
+            reference = i % 2
+            received = reference ^ int(i < errors)
+
+            # ui[5] = comparison valid
+            # ui[3] = received bit
+            # ui[2] = reference bit
+            dut.ui_in.value = (
+                (1 << 5)
+                | (received << 3)
+                | (reference << 2)
+            )
+
+            await RisingEdge(dut.clk)
+            await Timer(1, units="ns")
+
+            # Check final sample
+            if i == 127:
+                assert (int(dut.uo_out.value) >> 5) & 1 == 1
+                assert int(dut.uio_out.value) == errors
+
+        await FallingEdge(dut.clk)
+        dut.ui_in.value = 0
+
+        await ClockCycles(dut.clk, 2)
+        await Timer(1, units="ns")
+
+        mode = (int(dut.uo_out.value) >> 3) & 1
+
+        assert mode == expected_mode, (
+            f"errors={errors}: expected mode={expected_mode}, "
+            f"actual mode={mode}"
+        )
+
+        assert int(dut.uio_out.value) == errors
+
+        dut._log.info(
+            f"Errors={errors}, mode={mode}: PASS"
+        )
+
+    # 0 errors -> QPSK
+    await send_window(0, 1)
+
+    # 5 errors -> remain QPSK
+    await send_window(5, 1)
+
+    # 12 errors -> BPSK
+    await send_window(12, 0)
+
+    # Check I/Q mapping in BPSK mode
+    await FallingEdge(dut.clk)
+    dut.ui_in.value = (1 << 4)  # valid=1, data=00
+
+    await RisingEdge(dut.clk)
+    await Timer(1, units="ns")
+
+    out = int(dut.uo_out.value)
+
+    assert (out & 1) == 1       # I sign
+    assert ((out >> 1) & 1) == 0 # Q sign
+    assert ((out >> 2) & 1) == 1 # valid out
+
+    dut._log.info("ALL ADAPTIVE MODEM TESTS PASSED")
