@@ -5,8 +5,7 @@
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = tt_um_adaptive_bpsk_qpsk.sv adaptive_bpsk_qpsk_core.sv error_monitor.sv adaptive_controller.sv bpsk_qpsk_core.sv
-
+PROJECT_SOURCES = tt_um_adaptive_bpsk_qpsk.sv adaptive_bpsk_qpsk_core.sv error_monitor.sv adaptive_controller.sv bpsk_qpsk_core.sv rrc_pulse_shaper.sv rrc_iq_pair.sv rrc_stream_scheduler.sv rrc_symbol_buffer.sv
 ifneq ($(GATES),yes)
 
 # RTL simulation:

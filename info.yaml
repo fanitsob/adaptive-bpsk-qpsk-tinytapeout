@@ -1,8 +1,8 @@
 project:
-  title:        "Adaptive BPSK/QPSK Symbol Mapper"      # Project title
+  title:        "Adaptive BPSK/QPSK Modulator with RRC Pulse Shaping"      # Project title
   author:       "Fani Tsompani"      # Your name
   discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  "Adaptive BPSK/QPSK symbol mapper with bit error monitoring"      # One line description of what your project does
+  description:  "Adaptive BPSK/QPSK modulation with error monitoring and dual-channel digital RRC pulse shaping"      # One line description of what your project does
   language:     "SystemVerilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
   clock_hz:     50000000       # Clock frequency in Hz (or 0 if not applicable)
 
@@ -16,11 +16,14 @@ project:
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
     - "tt_um_adaptive_bpsk_qpsk.sv"
-    - "adaptive_bpsk_qpsk_core.sv"
+    - "adaptivAdaptive BPSK/QPSK modulation with error monitoring and dual-channel digital RRC pulse shapinge_bpsk_qpsk_core.sv"
     - "error_monitor.sv"
     - "adaptive_controller.sv"
     - "bpsk_qpsk_core.sv"
-
+    - "rrc_pulse_shaper.sv"
+    - "rrc_iq_pair.sv"
+    - "rrc_stream_scheduler.sv"
+    - "rrc_symbol_buError detected / RRC buffer readyffer.sv"
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 pinout:
   # Inputs
@@ -31,27 +34,27 @@ pinout:
   ui[4]: "Data valid"
   ui[5]: "Comparison valid"
   ui[6]: "Clear error monitor"
-  ui[7]: ""
+  ui[7]: "RRC enable"
 
   # Outputs
   uo[0]: "I sign"
   uo[1]: "Q sign"
   uo[2]: "Symbol valid"
   uo[3]: "Adaptive mode"
-  uo[4]: "Error detected"
-  uo[5]: "Window complete"
-  uo[6]: ""
-  uo[7]: ""
+  uo[4]: "Error detected / RRC buffer ready"
+  uo[5]: "Window done / RRC overflow"
+  uo[6]: "RRC sample valid"
+  uo[7]: "RRC sample channel (0=I, 1=Q)"
 
   # Bidirectional pins
-  uio[0]: "Error count bit 0"
-  uio[1]: "Error count bit 1"
-  uio[2]: "Error count bit 2"
-  uio[3]: "Error count bit 3"
-  uio[4]: "Error count bit 4"
-  uio[5]: "Error count bit 5"
-  uio[6]: "Error count bit 6"
-  uio[7]: "Error count bit 7"
+  uio[0]: "Error count / RRC sample bit 0"
+  uio[1]: "Error count / RRC sample bit 1"
+  uio[2]: "Error count / RRC sample bit 2"
+  uio[3]: "Error count / RRC sample bit 3"
+  uio[4]: "Error count / RRC sample bit 4"
+  uio[5]: "Error count / RRC sample bit 5"
+  uio[6]: "Error count / RRC sample bit 6"
+  uio[7]: "Error count / RRC sample bit 7"
 
 # Do not change!
 yaml_version: 6
