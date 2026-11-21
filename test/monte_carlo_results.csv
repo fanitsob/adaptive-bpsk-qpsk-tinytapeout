@@ -1,0 +1,4 @@
+Strategy,Mean_Switches,Mean_QPSK_Usage_Percent,Mean_Response_Delay_Windows
+Original,4.196,67.551,0.218
+Two-window,3.026,61.674,1.816
+Fast BPSK,3.344,58.855,0.215
