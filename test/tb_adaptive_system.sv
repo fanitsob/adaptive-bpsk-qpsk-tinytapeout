@@ -81,20 +81,37 @@ module tb_adaptive_system;
 
         #1;
 
-        if (mode !== 0)
+        if (mode !== 1'b0)
             $fatal(1, "Reset mode must be BPSK");
 
-        // No errors: QPSK
-        send_window(0, 1'b1);
+        // First good window: remain BPSK
+        send_window(0, 1'b0);
+
+        // Second good window: switch to QPSK
+        send_window(1, 1'b1);
 
         // Intermediate errors: remain QPSK
         send_window(5, 1'b1);
 
-        // Many errors: switch to BPSK
+        // High errors: immediately switch to BPSK
         send_window(12, 1'b0);
 
-        $display("ALL ADAPTIVE SYSTEM TESTS PASSED");
+        // First good window: remain BPSK
+        send_window(2, 1'b0);
+
+        // Intermediate window cancels pending confirmation
+        send_window(5, 1'b0);
+
+        // First good window again: remain BPSK
+        send_window(0, 1'b0);
+
+        // Second consecutive good window: switch QPSK
+        send_window(1, 1'b1);
+
+        $display("ALL FAST BPSK ADAPTIVE SYSTEM TESTS PASSED");
+
         $finish;
     end
+
 
 endmodule

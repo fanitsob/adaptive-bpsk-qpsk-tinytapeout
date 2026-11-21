@@ -65,15 +65,32 @@ async def test_adaptive_modem(dut):
             f"Errors={errors}, mode={mode}: PASS"
         )
 
-    # 0 errors -> QPSK
-    await send_window(0, 1)
+    # First good window: remain BPSK
+    await send_window(0, 0)
 
-    # 5 errors -> remain QPSK
+    # Second good window: switch to QPSK
+    await send_window(1, 1)
+
+    # Intermediate errors: remain QPSK
     await send_window(5, 1)
 
-    # 12 errors -> BPSK
+    # High errors: immediately switch to BPSK
     await send_window(12, 0)
 
+    # First good window: remain BPSK
+    await send_window(2, 0)
+
+    # Intermediate errors cancel pending confirmation
+    await send_window(5, 0)
+
+    # First good window again: remain BPSK
+    await send_window(0, 0)
+
+    # Second consecutive good window: switch QPSK
+    await send_window(1, 1)
+
+    # High errors: return immediately to BPSK
+    await send_window(8, 0)
     # Check I/Q mapping in BPSK mode
     await FallingEdge(dut.clk)
     dut.ui_in.value = (1 << 4)  # valid=1, data=00
