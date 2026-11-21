@@ -45,31 +45,43 @@ module tb_adaptive_controller;
 
     initial begin
 
-        // Reset
+        // Release reset
         repeat (3) @(negedge clk);
         rst_n = 1;
 
         #1;
 
-        if (mode !== 0)
+        if (mode !== 1'b0)
             $fatal(1, "Reset failed");
 
-        // 2 errors: switch to QPSK
-        check_mode(8'd2, 1'b1);
+        // First good window: remain BPSK
+        check_mode(8'd2, 1'b0);
 
-        // 5 errors: remain in QPSK
-        check_mode(8'd5, 1'b1);
-
-        // 8 errors: switch to BPSK
-        check_mode(8'd8, 1'b0);
-
-        // 5 errors: remain in BPSK
-        check_mode(8'd5, 1'b0);
-
-        // 1 error: switch to QPSK
+        // Second consecutive good window: switch QPSK
         check_mode(8'd1, 1'b1);
 
-        $display("ALL ADAPTIVE CONTROLLER TESTS PASSED");
+        // Intermediate errors: remain QPSK
+        check_mode(8'd5, 1'b1);
+
+        // High errors: immediately switch BPSK
+        check_mode(8'd8, 1'b0);
+
+        // First good window: remain BPSK
+        check_mode(8'd0, 1'b0);
+
+        // Intermediate window cancels confirmation
+        check_mode(8'd5, 1'b0);
+
+        // Good window again: still BPSK
+        check_mode(8'd1, 1'b0);
+
+        // Second consecutive good window: QPSK
+        check_mode(8'd2, 1'b1);
+
+        // High errors: immediate BPSK
+        check_mode(8'd12, 1'b0);
+
+        $display("ALL FAST BPSK / STABLE QPSK TESTS PASSED");
 
         $finish;
     end
