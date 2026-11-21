@@ -36,6 +36,8 @@ jobs:
         with:
           paths: "test/results.xml"
         if: always()
+      - name: Run RRC regression tests
+        run: bash test/rrc_regression/run.sh
 
       - name: upload vcd
         if: success() || failure()
