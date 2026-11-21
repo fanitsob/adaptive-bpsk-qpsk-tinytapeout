@@ -39,7 +39,7 @@ async def test_adaptive_modem(dut):
             )
 
             await RisingEdge(dut.clk)
-            await Timer(1, units="ns")
+            await Timer(8, units="ns")
 
             # Check final sample
             if i == 127:
@@ -50,7 +50,7 @@ async def test_adaptive_modem(dut):
         dut.ui_in.value = 0
 
         await ClockCycles(dut.clk, 2)
-        await Timer(1, units="ns")
+        await Timer(8, units="ns")
 
         mode = (int(dut.uo_out.value) >> 3) & 1
 
@@ -79,7 +79,7 @@ async def test_adaptive_modem(dut):
     dut.ui_in.value = (1 << 4)  # valid=1, data=00
 
     await RisingEdge(dut.clk)
-    await Timer(1, units="ns")
+    await Timer(8, units="ns")
 
     out = int(dut.uo_out.value)
 
