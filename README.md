@@ -6,11 +6,13 @@
 
 **A digital adaptive modulation ASIC designed for Tiny Tapeout using SystemVerilog and the Sky130 technology.**
 
+**[Explore the physical ASIC layout in the interactive 3D GDS Viewer](https://fanitsob.github.io/adaptive-bpsk-qpsk-tinytapeout/)**
+
 - **Author:** Fani Tsompani
 - **Technology:** Sky130
 - **Design flow:** RTL-to-GDS using OpenLane
 - **Tiny Tapeout tile:** 1×1
-**Configured clock frequency:** 50 MHz
+- **Configured clock frequency:** 50 MHz
 
 ---
 
